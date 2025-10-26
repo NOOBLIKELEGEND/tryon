@@ -1,7 +1,9 @@
 .env
+api.txt
 __pycache__/
 *.pyc
 uploads/
 results/
 static/results/*
 !static/results/.gitkeep
+.vscode/
