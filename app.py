@@ -1,11 +1,11 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, send_file
 import requests, os, time, base64
 from PIL import Image
 from dotenv import load_dotenv
 
 load_dotenv()
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static', template_folder='.')
 UPLOAD_FOLDER = "uploads"
 RESULT_FOLDER = "static/results"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -35,7 +35,7 @@ def save_as_jpg(upload_file, folder, name_prefix, max_dim=1200, min_dim=512):
 
 @app.route("/")
 def home():
-    return render_template("index.html")
+    return send_file('index.html')
 
 @app.route("/tryon", methods=["POST"])
 def tryon():
