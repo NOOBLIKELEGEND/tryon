@@ -1,0 +1,27 @@
+version: '3.8'
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - TRYON_API_KEY=${TRYON_API_KEY}
+      - TRYON_API_URL=${TRYON_API_URL}
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - redis
+    volumes:
+      - .:/app
+  redis:
+    image: redis:7
+  worker:
+    build: .
+    command: python worker.py
+    environment:
+      - TRYON_API_KEY=${TRYON_API_KEY}
+      - TRYON_API_URL=${TRYON_API_URL}
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - redis
+    volumes:
+      - .:/app

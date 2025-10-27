@@ -57,6 +57,28 @@ curl -G --output downloaded.jpg "http://localhost:5000/download" --data-urlencod
 
 These endpoints are useful for forcing a browser to download the image or for saving it from the API server.
 
+## Running in production (recommended small steps)
+
+Quick production checklist implemented in this repo:
+
+- Background processing with RQ/Redis (enqueue jobs with `/tryon`, worker runs `tasks.process_tryon_job`).
+- Container support via `Dockerfile` and `docker-compose.yml` (includes `redis` and a `worker` service).
+- Basic rate limiting (flask-limiter) and MAX_CONTENT_LENGTH upload cap.
+
+To run locally with Docker Compose (recommended for production-like testing):
+
+```bash
+# set your API key env var or create a .env with TRYON_API_KEY
+docker-compose up --build
+
+# web will be on http://localhost:8000
+# worker will start and connect to redis
+```
+
+Notes:
+- On PaaS platforms (Render, Heroku) set `TRYON_API_KEY` and `TRYON_API_URL` as environment variables. If you use background workers on those platforms, configure a separate worker service and a Redis add-on.
+- The app still writes results to `static/results/` which is ephemeral on many PaaS; for production use replace this with S3 or another object store and update `tasks.process_tryon_job` accordingly.
+
 ## Notes
 
 - Keep API keys out of the repository. Set `TRYON_API_KEY` and `TRYON_API_URL` as environment variables locally or in your deployment platform.
