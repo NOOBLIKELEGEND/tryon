@@ -1,4 +1,5 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
+import io
 from flask_cors import CORS
 import requests, os, time, base64
 from PIL import Image
@@ -54,6 +55,43 @@ def home():
 @app.route("/health")
 def health():
     return jsonify({"status": "ok"})
+
+
+@app.route("/download")
+def download_url():
+    """Proxy-download an image from a public URL and return it as an attachment.
+
+    Usage: GET /download?url=<image_url>
+    """
+    url = request.args.get("url")
+    if not url:
+        return jsonify({"error": "Missing 'url' query parameter"}), 400
+
+    try:
+        r = requests.get(url, stream=True, timeout=15)
+        if r.status_code != 200:
+            return jsonify({"error": "Failed to fetch image", "status_code": r.status_code}), 502
+
+        # Try to determine filename from URL
+        filename = os.path.basename(url.split("?")[0]) or "download.jpg"
+        # Fallback to a generic name if the filename looks invalid
+        if not any(filename.lower().endswith(ext) for ext in (".jpg", ".jpeg", ".png", ".gif", ".webp")):
+            filename = "download.jpg"
+
+        content_type = r.headers.get("Content-Type", "application/octet-stream")
+        return send_file(io.BytesIO(r.content), mimetype=content_type, as_attachment=True, download_name=filename)
+
+    except requests.RequestException as e:
+        return jsonify({"error": "Error fetching URL", "details": str(e)}), 502
+
+
+@app.route("/download/results/<filename>")
+def download_local_result(filename):
+    """Return a locally saved result image (in `static/results`) as a downloadable attachment."""
+    local_path = os.path.join(RESULT_FOLDER, filename)
+    if not os.path.exists(local_path):
+        return jsonify({"error": "File not found"}), 404
+    return send_file(local_path, as_attachment=True, download_name=filename)
 
 @app.route("/tryon", methods=["POST"])
 def tryon():

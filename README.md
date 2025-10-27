@@ -33,6 +33,30 @@ curl -X POST http://localhost:5000/tryon \
   -F "garment_image=@/path/to/garment.jpg"
 ```
 
+## Downloading images
+
+There are two ways to download images from the API:
+
+1. Download a saved local result (saved to `static/results/`):
+
+  - URL: `GET /download/results/<filename>`
+  - Example (curl):
+
+```bash
+curl -O -J http://localhost:5000/download/results/<filename>
+```
+
+2. Proxy-download a remote/public image by URL (the API will fetch it and return it as an attachment):
+
+  - URL: `GET /download?url=<image_url>`
+  - Example (curl):
+
+```bash
+curl -G --output downloaded.jpg "http://localhost:5000/download" --data-urlencode "url=https://example.com/image.jpg"
+```
+
+These endpoints are useful for forcing a browser to download the image or for saving it from the API server.
+
 ## Notes
 
 - Keep API keys out of the repository. Set `TRYON_API_KEY` and `TRYON_API_URL` as environment variables locally or in your deployment platform.
