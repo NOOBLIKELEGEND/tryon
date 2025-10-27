@@ -1,18 +1,25 @@
-from flask import Flask, render_template, request, jsonify, send_file
+from flask import Flask, request, jsonify
+from flask_cors import CORS
 import requests, os, time, base64
 from PIL import Image
 from dotenv import load_dotenv
 
 load_dotenv()
 
-app = Flask(__name__, static_folder='static', template_folder='.')
+# API-only mode: don't serve a frontend. Keep the static folder for saved results.
+app = Flask(__name__, static_folder='static')
+# Enable CORS so a frontend (hosted on a different origin) can call the API later
+CORS(app)
 UPLOAD_FOLDER = "uploads"
 RESULT_FOLDER = "static/results"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(RESULT_FOLDER, exist_ok=True)
 
-API_KEY = os.getenv("TRYON_API_KEY", "ta_a9430047ac43437c82bab051da5eb456")
-BASE_URL = os.getenv("TRYON_API_URL", "https://tryon-api.com/api/v1")
+from config import TRYON_API_KEY, TRYON_API_URL
+
+API_KEY = TRYON_API_KEY
+# fallback to default URL if not provided
+BASE_URL = TRYON_API_URL or os.getenv("TRYON_API_URL", "https://tryon-api.com/api/v1")
 
 def save_as_jpg(upload_file, folder, name_prefix, max_dim=1200, min_dim=512):
     temp_path = os.path.join(folder, upload_file.filename)
@@ -35,7 +42,18 @@ def save_as_jpg(upload_file, folder, name_prefix, max_dim=1200, min_dim=512):
 
 @app.route("/")
 def home():
-    return send_file('index.html')
+    return jsonify({
+        "message": "Try-on API is running. Use POST /tryon with form-data fields 'person_image' and 'garment_image' (files).",
+        "routes": {
+            "/tryon": "POST - form-data: person_image (file), garment_image (file)",
+            "/results/<filename>": "GET - retrieve generated result image"
+        }
+    })
+
+
+@app.route("/health")
+def health():
+    return jsonify({"status": "ok"})
 
 @app.route("/tryon", methods=["POST"])
 def tryon():
